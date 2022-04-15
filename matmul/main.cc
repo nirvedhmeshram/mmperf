@@ -199,15 +199,15 @@ float *A, *B, *C;
 
 #if defined(CUBLAS)
   cublasHandle_t handle;
-  float *AA, *BB, *CC;
+  half *AA, *BB, *CC;
   CHECK_CUBLAS(cublasCreate(&handle));
-  CHECK_CUBLAS(cublasSetMathMode(handle, CUBLAS_TF32_TENSOR_OP_MATH));
-  CHECK_CUDA(cudaMalloc((void **)(&AA), MDIM * KDIM * sizeof(float)));
-  CHECK_CUDA(cudaMalloc((void **)(&BB), KDIM * NDIM * sizeof(float)));
-  CHECK_CUDA(cudaMalloc((void **)(&CC), MDIM * NDIM * sizeof(float)));
-  CHECK_CUBLAS(cublasSetVector(MDIM * KDIM, sizeof(float), A, 1, AA, 1));
-  CHECK_CUBLAS(cublasSetVector(KDIM * NDIM, sizeof(float), B, 1, BB, 1));
-  CHECK_CUBLAS(cublasSetVector(MDIM * NDIM, sizeof(float), C, 1, CC, 1));
+  CHECK_CUBLAS(cublasSetMathMode(handle, CUBLAS_TENSOR_OP_MATH));
+  CHECK_CUDA(cudaMalloc((void **)(&AA), MDIM * KDIM * sizeof(half)));
+  CHECK_CUDA(cudaMalloc((void **)(&BB), KDIM * NDIM * sizeof(half)));
+  CHECK_CUDA(cudaMalloc((void **)(&CC), MDIM * NDIM * sizeof(half)));
+  CHECK_CUBLAS(cublasSetVector(MDIM * KDIM, sizeof(half), A, 1, AA, 1));
+  CHECK_CUBLAS(cublasSetVector(KDIM * NDIM, sizeof(half), B, 1, BB, 1));
+  CHECK_CUBLAS(cublasSetVector(MDIM * NDIM, sizeof(half), C, 1, CC, 1));
 #endif
 
 #if defined(MLIR_CUDA)
@@ -323,11 +323,23 @@ float *A, *B, *C;
     naive_matmul(A,B,C,MDIM,KDIM,NDIM);
 #elif defined(CUBLAS)
 #if defined(COLUMN_MAJOR)
-    CHECK_CUBLAS(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, MDIM, NDIM, KDIM,
-			     &alpha, AA, LDA, BB, LDB, &beta, CC, LDC));
+    /*CHECK_CUBLAS(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, MDIM, NDIM, KDIM,
+			     &alpha, AA, LDA, BB, LDB, &beta, CC, LDC));*/
+    CHECK_CUBLAS(cublasSgemmEx(handle, CUBLAS_OP_N, CUBLAS_OP_N, MDIM, NDIM, KDIM,
+			     &alpha, 
+           AA,CUDA_R_16F, LDA, 
+           BB,CUDA_R_16F, LDB, 
+           &beta, 
+           CC,CUDA_R_16F, LDC));           
 #else
-    CHECK_CUBLAS(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, NDIM, MDIM, KDIM,
-			     &alpha, BB, LDB, AA, LDA, &beta, CC, LDC));
+    /*CHECK_CUBLAS(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, NDIM, MDIM, KDIM,
+			     &alpha, BB, LDB, AA, LDA, &beta, CC, LDC));*/
+    CHECK_CUBLAS(cublasSgemmEx(handle, CUBLAS_OP_N, CUBLAS_OP_N, MDIM, NDIM, KDIM,
+			     &alpha,
+           BB,CUDA_R_16F, LDB,  
+           AA,CUDA_R_16F, LDA, 
+           &beta, 
+           CC,CUDA_R_16F, LDC));
 #endif
 #endif
   }
@@ -335,7 +347,7 @@ float *A, *B, *C;
 #if defined(TVM)
   TVMArrayCopyToBytes(z, C, MDIM * NDIM * sizeof(float));
 #elif defined(CUBLAS)
-  CHECK_CUBLAS(cublasGetVector(MDIM * NDIM, sizeof(float), CC, 1, C, 1));
+  CHECK_CUBLAS(cublasGetVector(MDIM * NDIM, sizeof(half), CC, 1, C, 1));
 #endif
 
 #ifdef ENABLE_CHECK
