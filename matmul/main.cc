@@ -334,7 +334,7 @@ float *A, *B, *C;
 #else
     /*CHECK_CUBLAS(cublasSgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, NDIM, MDIM, KDIM,
 			     &alpha, BB, LDB, AA, LDA, &beta, CC, LDC));*/
-    CHECK_CUBLAS(cublasSgemmEx(handle, CUBLAS_OP_N, CUBLAS_OP_N, MDIM, NDIM, KDIM,
+    CHECK_CUBLAS(cublasSgemmEx(handle, CUBLAS_OP_N, CUBLAS_OP_N, NDIM, MDIM, KDIM,
 			     &alpha,
            BB,CUDA_R_16F, LDB,  
            AA,CUDA_R_16F, LDA, 
